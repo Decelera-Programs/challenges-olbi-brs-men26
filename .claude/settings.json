@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\CarlosMartinez\\\\OneDrive - SANCUS CAPITAL SGEIC S.A\\\\Escritorio\\\\decelera-repositorios\\\\challenges-olbi-brs-men26\")",
+      "Bash(Select-Object Name, FullName)"
+    ]
+  }
+}
