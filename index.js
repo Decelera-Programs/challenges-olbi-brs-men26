@@ -83,28 +83,36 @@ async function findPersonByName(name) {
   if (!name) return null;
   const normalized = name.trim();
 
-  const { data: exact } = await supabase
-    .from("Person")
-    .select("id, full_name")
-    .ilike("full_name", normalized)
-    .limit(1);
+  // Búsqueda usando unaccent en ambos lados (maneja tildes y variaciones)
+  const { data: exact } = await supabase.rpc("search_person_by_name", {
+    search_name: normalized,
+  });
 
-  if (exact?.length) return exact[0];
+  if (exact?.length === 1) return exact[0];
 
+  // Si hay varios candidatos o ninguno exacto, puntuamos por palabras
   const words = normalized.split(/\s+/).filter(Boolean);
-  const candidates = [];
+  const candidates = exact?.length ? exact : [];
 
-  for (const word of words) {
-    const { data } = await supabase
-      .from("Person")
-      .select("id, full_name")
-      .ilike("full_name", `%${word}%`);
-    if (data) candidates.push(...data);
+  if (!candidates.length) {
+    // Fallback: buscar por cada palabra individualmente
+    for (const word of words) {
+      const { data } = await supabase.rpc("search_person_by_name", {
+        search_name: word,
+      });
+      if (data) candidates.push(...data);
+    }
   }
 
   if (!candidates.length) return null;
 
-  const scored = candidates.map((p) => {
+  // Desduplicar por id
+  const unique = Object.values(
+    candidates.reduce((acc, p) => ({ ...acc, [p.id]: p }), {})
+  );
+
+  // Puntuar por palabras coincidentes (sin tildes)
+  const scored = unique.map((p) => {
     const lower = p.full_name.toLowerCase();
     const score = words.filter((w) => lower.includes(w.toLowerCase())).length;
     return { ...p, score };
