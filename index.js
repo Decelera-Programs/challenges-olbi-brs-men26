@@ -250,7 +250,7 @@ app.post("/webhook/olbi-brs", async (req, res) => {
 
     const { error: updateErr } = await supabase
       .from("Person")
-      .update({ olbi_brs: payload })
+      .update({ olbi_brs_post: payload })
       .eq("id", person.id);
 
     if (updateErr) throw updateErr;
